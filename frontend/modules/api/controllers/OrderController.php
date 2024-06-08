@@ -2263,7 +2263,7 @@ class OrderController extends Controller
         $message .= "เงินโอน: " . number_format($this->getPaymentTransfer($route_id,date('Y-m-d')), 2) . "\n";
 
         // $message .= 'สามารถดูรายละเอียดได้ที่ http://103.253.73.108/icesystem/backend/web/index.php?r=dailysum/indexnew' . "\n"; // nky
-        $message .= 'สามารถดูรายละเอียดได้ที่ http://141.98.16.4/icesystem/backend/web/index.php?r=dailysum/indexnew' . "\n"; // bkt
+        $message .= 'สามารถดูรายละเอียดได้ที่ http://103.13.28.31/icesystem/backend/web/index.php?r=dailysum/indexnew' . "\n"; // bkt
 
 
         $queryData = array('message' => $message);
