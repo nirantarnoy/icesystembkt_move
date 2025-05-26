@@ -1947,6 +1947,7 @@ class OrderController extends Controller
                                     $model_update_line->line_total = 0;
                                     if ($model_update_line->save(false)) {
                                         $status = 1;
+                                        $this->updateOrdermasterCancel($model->order_id);
                                         array_push($data, ['cancel_order' => 'successfully']);
                                         $this->notifymessage('สายส่ง: ' . $route_name . ' ยกเลิกรายการขาย ' . $order_no . ' ลูกค้า: ' . $customer_code . ' ยอดเงิน: ' . $model->line_total . ' เหตุผล: ' . $reason);
                                     }
@@ -1970,6 +1971,7 @@ class OrderController extends Controller
                                         $model_update_line->line_total = 0;
                                         if ($model_update_line->save(false)) {
                                             $status = 1;
+                                            $this->updateOrdermasterCancel($model->order_id);
                                             array_push($data, ['cancel_order' => 'successfully']);
                                             $this->notifymessage('สายส่ง: ' . $route_name . ' ยกเลิกรายการขาย ' . $order_no . ' ลูกค้า: ' . $customer_code . ' ยอดเงิน: ' . $model->line_total . ' เหตุผล: ' . $reason);
                                         }
@@ -1984,6 +1986,25 @@ class OrderController extends Controller
             }
         }
         return ['status' => $status, 'data' => $data];
+    }
+
+    public function updateOrdermasterCancel($order_id){
+        if($order_id != null){
+            $cnt = 0;
+            $model = \common\models\OrderLine::find()->where(['order_id' => $order_id])->all();
+            if($model){
+                $cnt = count($model);
+                $is_cancel = 0;
+                foreach ($model as $value) {
+                    if($value->status == 500){
+                        $is_cancel += 1;
+                    }
+                }
+                if($cnt == $is_cancel) { // check all line is cancel
+                    \common\models\Orders::updateAll(['status'=>3],['id'=>$order_id]); // update order master to cancel status
+                }
+            }
+        }
     }
 
     public function actionCancelorder2()
