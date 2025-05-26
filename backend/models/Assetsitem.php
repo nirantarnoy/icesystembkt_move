@@ -65,12 +65,12 @@ class Assetsitem extends \common\models\Assets
         ];
     }
 
-    public static function findId($name)
+    public function findId($name)
     {
         $model = Assets::find()->where(['asset_name' => $name])->one();
         return $model != null ? $model->id : 0;
     }
-    public static function findIdFromCode($name)
+    public function findIdFromCode($name)
     {
         $model = Assets::find()->where(['asset_no' => $name])->one();
         return $model != null ? $model->id : 0;
@@ -91,14 +91,29 @@ class Assetsitem extends \common\models\Assets
         $model = Assets::find()->select('asset_no')->where(['id' => $id])->one();
         return $model != null ? $model->asset_no : '';
     }
-    public static function findCustomername($id, $branch_id)
+    public static function findPrice($id)
     {
-        $model = \common\models\CustomerAsset::find()->where(['product_id' => $id,'branch_id'=>$branch_id])->one();
+        $model = Assets::find()->select('rent_price')->where(['id' => $id])->one();
+        return $model != null ? $model->rent_price : 0;
+    }
+    public static function findCustomername($id)
+    {
+        $model = \common\models\CustomerAsset::find()->where(['product_id' => $id])->one();
         return $model != null ? \backend\models\Customer::findName($model->customer_id) : '';
     }
-    public static function findCustomerid($id, $branch_id)
+    public static function findCustomerCode($id)
     {
-        $model = \common\models\CustomerAsset::find()->where(['product_id' => $id, 'branch_id'=>$branch_id])->one();
+        $model = \common\models\CustomerAsset::find()->where(['product_id' => $id])->one();
+        return $model != null ? \backend\models\Customer::findCode($model->customer_id) : '';
+    }
+    public static function findCustomerRouteNum($id)
+    {
+        $model = \common\models\CustomerAsset::find()->where(['product_id' => $id])->one();
+        return $model != null ? \backend\models\Customer::findRouteNum($model->customer_id) : '';
+    }
+    public static function findCustomerid($id)
+    {
+        $model = \common\models\CustomerAsset::find()->where(['product_id' => $id])->one();
         return $model != null ? $model->customer_id : 0;
     }
 

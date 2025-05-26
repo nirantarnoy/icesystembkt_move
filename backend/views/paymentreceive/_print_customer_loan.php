@@ -40,6 +40,10 @@ $mpdf->AddPageByArray([
     'margin-bottom' => 1,
 ]);
 
+$is_admin = \backend\models\User::checkIsAdmin(\Yii::$app->user->id);
+
+include \Yii::getAlias("@backend/helpers/ChangeAdminDate2.php");
+
 $model_customer_loan = null;
 if ($is_find_date == 1) {
     if ($find_customer_id != null) {

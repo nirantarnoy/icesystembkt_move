@@ -38,6 +38,10 @@ $mpdf->AddPageByArray([
     'margin-bottom' => 1,
 ]);
 
+$is_admin = \backend\models\User::checkIsAdmin(\Yii::$app->user->id);
+
+include \Yii::getAlias("@backend/helpers/ChangeAdminDate2.php");
+
 ?>
     <!DOCTYPE html>
     <html>
@@ -294,9 +298,9 @@ $mpdf->AddPageByArray([
                                                 <?php
                                                 $order_credit = \backend\models\Orderline::find()->where(['order_id' => $payline[$k]['order_id']])->sum('line_total');
 
-                                                if($payline[$k]['pay_channel'] == 'เงินสด'){
+                                                if ($payline[$k]['pay_channel'] == 'เงินสด') {
                                                     $payment_cash = ($payment_cash + $payline[$k]['pay']);
-                                                }else  if($payline[$k]['pay_channel'] == 'เงินโอน'){
+                                                } else if ($payline[$k]['pay_channel'] == 'เงินโอน') {
                                                     $payment_transfer = ($payment_transfer + $payline[$k]['pay']);
                                                 }
                                                 ?>
@@ -309,8 +313,15 @@ $mpdf->AddPageByArray([
                                                     <td><?= $payline[$k]['user'] ?></td>
                                                     <td><?= $payline[$k]['pay_channel'] ?></td>
                                                     <td>
-                                                        <?php if ($payline[$k]['doc'] != null || $payline[$k]['doc'] != ''): ?>
-                                                            <a href="<?=\Yii::$app->getUrlManager()->baseUrl . '/uploads/files/receive/' . $payline[$k]['doc']?>" target="_blank" style="color: red">view</a>
+                                                        <!--                                                        --><?php //if ($payline[$k]['doc'] != null || $payline[$k]['doc'] != ''): ?>
+                                                        <!--                                                            <a href="-->
+                                                        <?php //=\Yii::$app->getUrlManager()->baseUrl . '/uploads/files/receive/' . $payline[$k]['doc']?><!--" target="_blank" style="color: red">view</a>-->
+                                                        <!--                                                        --><?php //endif; ?>
+                                                        <?php if ($k == 0): ?>
+                                                            <?php if ($find_order[$i]['slip_doc'] != null || $find_order[$i]['slip_doc'] != ''): ?>
+                                                                <a href="<?= \Yii::$app->getUrlManager()->baseUrl . '/uploads/files/receive/' . $find_order[$i]['slip_doc'] ?>"
+                                                                   target="_blank" style="color: red">view</a>
+                                                            <?php endif; ?>
                                                         <?php endif; ?>
                                                     </td>
                                                 </tr>
@@ -319,19 +330,7 @@ $mpdf->AddPageByArray([
                                     </td>
                                 </tr>
                             <?php endif; ?>
-                            <?php if ($loop_count == $x): ?>
-                                <!--                                <tr>-->
-                                <!--                                    <td style="font-size: 16px;border-top: 1px solid black"></td>-->
-                                <!--                                    <td style="font-size: 16px;border-top: 1px solid black"></td>-->
-                                <!--                                    <td style="font-size: 16px;border-top: 1px solid black"></td>-->
-                                <!--                                    <td style="font-size: 16px;border-top: 1px solid black"></td>-->
-                                <!--                                    <td style="font-size: 16px;border-top: 1px solid black"></td>-->
-                                <!--                                    <td style="font-size: 16px;border-top: 1px solid black"></td>-->
-                                <!--                                    <td style="font-size: 16px;border-top: 1px solid black"></td>-->
-                                <!--                                    <td style="font-size: 16px;text-align: right;border-top: 1px solid black;border-bottom: 1px solid black">-->
-                                <!--                                        <b>--><?php ////echo number_format($sum_total, 2) ?><!--</b></td>-->
-                                <!--                                </tr>-->
-                            <?php endif; ?>
+
                         <?php endfor ?>
                     <?php endif; ?>
                 <?php endfor; ?>
@@ -382,9 +381,9 @@ $mpdf->AddPageByArray([
                                         <?php for ($k = 0; $k <= count($payline) - 1; $k++): ?>
                                             <?php
                                             $order_credit = \backend\models\Orderline::find()->where(['order_id' => $payline[$k]['order_id']])->sum('line_total');
-                                            if($payline[$k]['pay_channel'] == 'เงินสด'){
+                                            if ($payline[$k]['pay_channel'] == 'เงินสด') {
                                                 $payment_cash = ($payment_cash + $payline[$k]['pay']);
-                                            }else  if($payline[$k]['pay_channel'] == 'เงินโอน'){
+                                            } else if ($payline[$k]['pay_channel'] == 'เงินโอน') {
                                                 $payment_transfer = ($payment_transfer + $payline[$k]['pay']);
                                             }
                                             ?>
@@ -397,8 +396,17 @@ $mpdf->AddPageByArray([
                                                 <td><?= $payline[$k]['user'] ?></td>
                                                 <td><?= $payline[$k]['pay_channel'] ?></td>
                                                 <td>
-                                                    <?php if ($payline[$k]['doc'] != null || $payline[$k]['doc'] != ''): ?>
-                                                        <a href="#">view</a>
+                                                    <?php if ($k == 0): ?>
+                                                        <?php if ($find_order[$i]['slip_doc'] != null || $find_order[$i]['slip_doc'] != ''): ?>
+                                                            <?php if (file_exists('../web/uploads/files/receive/' . $find_order[$i]['slip_doc'])): ?>
+                                                                <a href="<?= \Yii::$app->getUrlManager()->baseUrl . '/uploads/files/receive/' . $find_order[$i]['slip_doc'] ?>"
+                                                                   target="_blank" style="color: red">view</a>
+                                                            <?php else: ?>
+                                                                <a href="<?= \Yii::$app->urlManagerFrontend->getBaseUrl() . '/uploads/files/receive/' . $find_order[$i]['slip_doc'] ?>"
+                                                                   target="_blank" style="color: red">view</a>
+                                                            <?php endif; ?>
+
+                                                        <?php endif; ?>
                                                     <?php endif; ?>
                                                 </td>
                                             </tr>
@@ -451,11 +459,11 @@ $mpdf->AddPageByArray([
             <table style="border: 1px solid grey;">
                 <tr>
                     <td style="width: 20%">เงินสด</td>
-                    <td><?=number_format($payment_cash,2)?></td>
+                    <td><?= number_format($payment_cash, 2) ?></td>
                 </tr>
                 <tr>
                     <td>เงินโอน</td>
-                    <td><?=number_format($payment_transfer, 2)?></td>
+                    <td><?= number_format($payment_transfer, 2) ?></td>
                 </tr>
             </table>
         </div>
@@ -490,7 +498,7 @@ function getPayment($f_date, $t_date, $find_sale_type, $find_user_id, $company_i
 //             AND t3.delivery_route_id = " . $find_user_id . "
 //             AND t1.company_id=" . $company_id . " AND t1.branch_id=" . $branch_id;
 
-    $sql = "SELECT t1.id,t1.journal_no,t1.customer_code,t1.customer_name,t1.customer_id,SUM(t1.payment_amount) as amount,t1.trans_date,t1.order_no  from query_payment_receive as t1 INNER JOIN customer as t2 on t2.id = t1.customer_id 
+    $sql = "SELECT t1.id,t1.journal_no,t1.slip_doc,t1.customer_code,t1.customer_name,t1.customer_id,SUM(t1.payment_amount) as amount,t1.trans_date,t1.order_no  from query_payment_receive as t1 INNER JOIN customer as t2 on t2.id = t1.customer_id 
               WHERE (t1.trans_date>= " . "'" . date('Y-m-d H:i', strtotime($f_date)) . "'" . " 
               AND t1.trans_date <= " . "'" . date('Y-m-d H:i', strtotime($t_date)) . "'" . " )
               AND t1.status <> 100 
@@ -521,6 +529,7 @@ function getPayment($f_date, $t_date, $find_sale_type, $find_user_id, $company_i
                 'cus_type' => $customer_type,
                 'pay' => $model[$i]['amount'],
                 'trans_date' => $model[$i]['trans_date'],
+                'slip_doc' => $model[$i]['slip_doc'],
             ]);
         }
     }
@@ -555,6 +564,19 @@ function getPaymentLine($payment_id, $company_id, $branch_id)
     return $data;
 }
 
+function findSlipDoc($order_id)
+{
+    $name = '';
+    if ($order_id != null) {
+        $model = \backend\models\Orders::find()->select(['slip_doc'])->where(['id' => $order_id])->one();
+        if ($model) {
+            $name = $model->slip_doc;
+        }
+    }
+
+    return $name;
+}
+
 function getPaymentAll($f_date, $t_date, $find_sale_type, $company_id, $branch_id)
 {
     $list_route_id = null;
@@ -569,7 +591,7 @@ function getPaymentAll($f_date, $t_date, $find_sale_type, $company_id, $branch_i
 //             AND t3.delivery_route_id = " . $find_user_id . "
 //             AND t1.company_id=" . $company_id . " AND t1.branch_id=" . $branch_id;
 
-    $sql = "SELECT t1.id,t1.journal_no,t1.customer_code,t1.customer_name,t1.customer_id,SUM(t1.payment_amount) as amount,t1.trans_date,t1.order_no  
+    $sql = "SELECT t1.id,t1.journal_no,t1.slip_doc,t1.customer_code,t1.customer_name,t1.customer_id,SUM(t1.payment_amount) as amount,t1.trans_date,t1.order_no  
               from query_payment_receive as t1 INNER JOIN customer as t2 on t2.id = t1.customer_id INNER JOIN orders as t3 ON t1.order_id = t3.id 
               WHERE (t1.trans_date >= " . "'" . date('Y-m-d H:i', strtotime($f_date)) . "'" . " 
               AND t1.trans_date <= " . "'" . date('Y-m-d H:i', strtotime($t_date)) . "'" . " )
@@ -602,6 +624,7 @@ function getPaymentAll($f_date, $t_date, $find_sale_type, $company_id, $branch_i
                 'cus_type' => $customer_type,
                 'pay' => $model[$i]['amount'],
                 'trans_date' => $model[$i]['trans_date'],
+                'slip_doc' => $model[$i]['slip_doc'],
             ]);
         }
     }

@@ -23,6 +23,7 @@ class CustomerController extends Controller
                     'assetchecklist' => ['POST'],
                     'checklist' => ['POST'],
                     'addnewasset' => ['POST'],
+                    'checkin' => ['POST'],
                 ],
             ],
         ];
@@ -189,6 +190,22 @@ class CustomerController extends Controller
                     }
 
                 }
+
+//                $newfile = time() + 1 . ".jpg";
+//                $outputfile = '../web/uploads/assetcheck/' . $newfile;          //save as image.jpg in uploads/ folder
+//
+//                $filehandler = fopen($outputfile, 'wb');
+//                //file open with "w" mode treat as text file
+//                //file open with "wb" mode treat as binary file
+//
+//                fwrite($filehandler, base64_decode(trim($base64_string)));
+//                // we could add validation here with ensuring count($data)>1
+//
+//                // clean up the file resource
+//                fclose($filehandler);
+//                // file_put_contents($newfile,base64_decode($base64_string));
+//                // $newfile = base64_decode($base64_string);
+//                    $newfilesave = $newfile;
 
             }
 
@@ -361,6 +378,65 @@ class CustomerController extends Controller
             }
 
 
+        }
+
+        return ['status' => $status, 'data' => $data];
+    }
+    public function actionCheckin()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $req_data = \Yii::$app->request->getBodyParams();
+        $company_id = $req_data['company_id'];
+        $branch_id = $req_data['branch_id'];
+        $route_id = $req_data['route_id'];
+        $customer_id = $req_data['customer_id'];
+        $user_id = $req_data['user_id'];
+        $base64_string = $req_data['image'];
+        $location = $req_data['location'];
+
+        $data = [];
+        $status = false;
+
+        if ($company_id != null && $branch_id != null && $customer_id != null && $user_id != null) {
+            $newfilesave = '';
+            if ($base64_string != null) {
+                $has_photo = 1;
+
+                for ($xp = 0; $xp <= count($base64_string) - 1; $xp++) {
+                    $newfile = time() + $xp . ".jpg";
+                    $outputfile = '../web/uploads/assetcheck/' . $newfile;          //save as image.jpg in uploads/ folder
+
+                    $filehandler = fopen($outputfile, 'wb');
+                    //file open with "w" mode treat as text file
+                    //file open with "wb" mode treat as binary file
+
+                    fwrite($filehandler, base64_decode(trim($base64_string[$xp])));
+                    // we could add validation here with ensuring count($data)>1
+
+                    // clean up the file resource
+                    fclose($filehandler);
+                    // file_put_contents($newfile,base64_decode($base64_string));
+                    // $newfile = base64_decode($base64_string);
+                    if ($xp == 0) {
+                        $newfilesave = $newfile;
+                    } else {
+                        $newfilesave = $newfilesave . ',' . $newfile;
+                    }
+
+                }
+
+            }
+            $model = new \backend\models\Customercheckin();
+            $model->customer_id = $customer_id;
+            $model->checkin_date = date('Y-m-d H:i:s');
+            $model->company_id = $company_id;
+            $model->branch_id = $branch_id;
+            $model->route_id = $route_id;
+            $model->latlong = $location;
+            $model->photo = $newfilesave;
+            if($model->save(false)){
+                $status = 1;
+            }
         }
 
         return ['status' => $status, 'data' => $data];

@@ -39,6 +39,10 @@ $mpdf->AddPageByArray([
     'margin-bottom' => 1,
 ]);
 
+$is_admin = \backend\models\User::checkIsAdmin(\Yii::$app->user->id);
+
+include \Yii::getAlias("@backend/helpers/ChangeAdminDate2.php");
+
 $model_line = \common\models\QuerySaleMobileDataNew::find()->select(['route_id'])->where(['BETWEEN', 'date(order_date)', date('Y-m-d', strtotime($from_date)), date('Y-m-d', strtotime($to_date))])
     ->andFilterWhere(['company_id' => $company_id, 'branch_id' => $branch_id])->orderBy(['route_id' => SORT_ASC])->groupBy('route_id')->all();
 

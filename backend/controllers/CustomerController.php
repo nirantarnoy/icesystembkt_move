@@ -147,6 +147,16 @@ class CustomerController extends Controller
                 $photo->saveAs(Yii::getAlias('@backend') . '/web/uploads/images/customer/' . $photo_name);
                 $model->shop_photo = $photo_name;
             }
+                 $fdate = date('Y-m-d');
+            $xdate = explode('-', $model->active_date);
+            if($xdate != null){
+                if(count($xdate) > 1){
+                    $fdate = $xdate[2] . '/' . $xdate[1] . '/' . $xdate[0];
+                }
+            }
+
+            $model->active_date = date('Y-m-d', strtotime($fdate));
+
 
            // echo $model->getLastNo($company_id, $branch_id);
 
@@ -201,6 +211,17 @@ class CustomerController extends Controller
                 $photo->saveAs(Yii::getAlias('@backend') . '/web/uploads/images/customer/' . $photo_name);
                 $model->shop_photo = $photo_name;
             }
+
+                 $fdate = date('Y-m-d');
+            $xdate = explode('-', $model->active_date);
+            if($xdate != null){
+                if(count($xdate) > 1){
+                    $fdate = $xdate[2] . '/' . $xdate[1] . '/' . $xdate[0];
+                }
+            }
+
+            $model->active_date = date('Y-m-d', strtotime($fdate));
+
             $model->sort_name = $model->sort_name == null ? '' : $model->sort_name;
             $model->is_show_pos = $model->sort_name == null || $model->sort_name == '' ? 1 : 0;
             if ($model->save(false)) {

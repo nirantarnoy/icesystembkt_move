@@ -134,6 +134,10 @@ class OrdersposSearch extends Orders
 //
 //        }
 
+        $is_admin = \backend\models\User::checkIsAdmin(\Yii::$app->user->id);
+
+        include \Yii::getAlias("@backend/helpers/ChangeAdminDate.php");
+
         if($this->from_date != null && $this->to_date != null){
             $fx_datetime = explode(' ',$this->from_date);
             $tx_datetime = explode(' ',$this->to_date);

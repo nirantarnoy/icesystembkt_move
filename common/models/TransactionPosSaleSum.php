@@ -43,7 +43,7 @@ class TransactionPosSaleSum extends \yii\db\ActiveRecord
         return [
             [['trans_date','logout_datetime'], 'safe'],
             [['product_id', 'created_at','user_second_id'], 'integer'],
-            [['credit_qty', 'cash_qty', 'free_qty', 'balance_in_qty', 'balance_out_qty', 'prodrec_qty', 'reprocess_qty', 'return_qty', 'issue_car_qty', 'issue_transfer_qty', 'issue_refill_qty', 'scrap_qty', 'counting_qty','user_id','login_datetime'], 'number'],
+            [['credit_qty', 'cash_qty', 'free_qty', 'balance_in_qty', 'balance_out_qty', 'prodrec_qty', 'reprocess_qty', 'return_qty', 'issue_car_qty', 'issue_transfer_qty', 'issue_refill_qty', 'scrap_qty', 'counting_qty','user_id','login_datetime','transfer_in_qty'], 'number'],
         ];
     }
 

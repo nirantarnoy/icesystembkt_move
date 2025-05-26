@@ -296,6 +296,7 @@ if($from_date !='' && $to_date != ''){
     $total_product[12] = 0;
     $total_product[13] = 0;
     $total_product[14] = 0;
+    $total_product[15] = 0;
 
 
     //    $modelx = \common\models\StockTrans::find()->select(['product_id'])->join('inner join', 'product', 'stock_trans.product_id=product.id')->where(['BETWEEN', 'date(trans_date)', date('Y-m-d', strtotime($from_date)), date('Y-m-d', strtotime($to_date))])
@@ -400,7 +401,7 @@ if($from_date !='' && $to_date != ''){
             <td colspan="3" style="text-align: right;border: 1px solid gray;"><b>รวม</b></td>
             <?php for ($x = 0; $x <= count($product_header) - 1; $x++): ?>
                 <td style="text-align: center;padding: 8px;padding-right: 5px;border: 1px solid grey;background-color: skyblue;font-weight: bold;">
-                    <?= $total_product[$x] == 0 ? '-' : number_format($total_product[$x], 1) ?>
+                    <?php echo $total_product[$x] == 0 ? '-' : number_format($total_product[$x], 1) ?>
                 </td>
             <?php endfor; ?>
             <td style="text-align: right;padding: 8px;padding-right: 5px;border: 1px solid grey;background-color: skyblue;font-weight: bold;"><?= number_format($all_return_qty, 1) ?></td>

@@ -68,7 +68,14 @@ class ScrapSearch extends \common\models\QueryScrap
             $query->andFilterWhere(['created_by' => $this->created_by]);
         }
 
+
+
         if($this->from_date != null && $this->to_date != null){
+
+             $is_admin = \backend\models\User::checkIsAdmin(\Yii::$app->user->id);
+
+             include \Yii::getAlias("@backend/helpers/ChangeAdminDate.php");
+
             $fx_datetime = explode(' ',$this->from_date);
             $tx_datetime = explode(' ',$this->to_date);
 

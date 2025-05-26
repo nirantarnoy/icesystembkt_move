@@ -70,6 +70,13 @@ class Customer extends \common\models\Customer
         $model = Customer::find()->where(['id' => $id])->one();
         return $model != null ? $model->code : '';
     }
+    public static function findRouteNum($id)
+    {
+        $model = Customer::find()->where(['id' => $id])->one();
+        return $model != null ? $model->route_num : '';
+    }
+
+
 
     public static function findName($id)
     {
@@ -99,6 +106,12 @@ class Customer extends \common\models\Customer
         $model = \common\models\QueryCustomerInfo::find()->where(['customer_id' => $customer_id])->one();
         return $model != null ? $model->rt_id : 0;
     }
+
+    public static function findRouteNums($customer_id)
+    {
+        $model = \common\models\Customer::find()->where(['id' => $customer_id])->one();
+        return $model != null ? $model->route_num : '';
+    }
     public static function getAddress($customer_id)
     {
         $model = \common\models\Customer::find()->where(['id' => $customer_id])->one();
@@ -119,6 +132,11 @@ class Customer extends \common\models\Customer
     {
         $model = Customer::find()->where(['id' => $id])->one();
         return $model != null ? $model->location_info : '';
+    }
+    public static function getAssetCount($id)
+    {
+        $model = \common\models\CustomerAsset::find()->where(['customer_id' => $id])->count();
+        return $model;
     }
 
     public static function findPayTerm($id)
@@ -192,19 +210,22 @@ class Customer extends \common\models\Customer
         //   $model = Orders::find()->MAX('order_no');
         $model = Customer::find()->where(['company_id' => $company_id, 'branch_id' => $branch_id])->MAX('code');
 
-        $pre = "BT";
+        $prefix = "BT";
+      //  $prefix = '';
 
         //if($branch_id==1){
             if ($model != null) {
+
 //            $prefix = $pre.substr(date("Y"),2,2);
 //            $cnum = substr((string)$model,4,strlen($model));
 //            $len = strlen($cnum);
 //            $clen = strlen($cnum + 1);
 //            $loop = $len - $clen;
-             //   $prefix = $pre . '-' . substr(date("Y"), 2, 2);
-                $prefix = $pre;
-               //    $cnum = substr((string)$model, 5, strlen($model)); // omnoi
-                $cnum = substr((string)$model, 2, strlen($model));
+ //               $prefix = $pre . '-' . substr(date("Y"), 2, 2);
+    //            $prefix = $pre . '-' . substr(date("Y"), 2, 2);
+                //  $prefix = $pre;
+                   $cnum = substr((string)$model, 2, strlen($model)); // omnoi
+               // $cnum = substr((string)$model, 3, strlen($model));
 
                 $len = strlen($cnum);
                 $clen = strlen($cnum + 1);
@@ -216,8 +237,8 @@ class Customer extends \common\models\Customer
                 return $prefix;
             } else {
              //   $prefix = $pre . '-' . substr(date("Y"), 2, 2); // omnoi
-                $prefix = $pre;
-                return $prefix . '00001';
+                $prefix = $prefix;
+                return $prefix . '0001';
             }
        // }
 

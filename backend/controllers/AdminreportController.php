@@ -26,13 +26,48 @@ class AdminreportController extends Controller
         $from_date = \Yii::$app->request->post('from_date');
         $to_date = \Yii::$app->request->post('to_date');
         $find_emp_id = \Yii::$app->request->post('find_emp_id');
-        return $this->render('_cardaily', [
+        $print_type = \Yii::$app->request->post('print_type');
+
+            return $this->render('_cardaily', [
+                'from_date' => $from_date,
+                'to_date' => $to_date,
+                'company_id' => $company_id,
+                'branch_id' => $branch_id,
+                'find_emp_id' => $find_emp_id,
+                'print_type' => $print_type
+            ]);
+
+
+    }
+
+    public function actionCardaily2()
+    {
+
+        $company_id = 0;
+        $branch_id = 0;
+
+        if (!empty(\Yii::$app->user->identity->company_id)) {
+            $company_id = \Yii::$app->user->identity->company_id;
+        }
+        if (!empty(\Yii::$app->user->identity->branch_id)) {
+            $branch_id = \Yii::$app->user->identity->branch_id;
+        }
+        $from_date = \Yii::$app->request->post('from_date');
+        $to_date = \Yii::$app->request->post('to_date');
+        $find_emp_id = \Yii::$app->request->post('find_emp_id');
+        $print_type = \Yii::$app->request->post('print_type');
+
+
+        return $this->render('_cardaily_new', [
             'from_date' => $from_date,
             'to_date' => $to_date,
             'company_id' => $company_id,
             'branch_id' => $branch_id,
-            'find_emp_id' => $find_emp_id
+            'find_emp_id' => $find_emp_id,
+            'print_type' => $print_type
         ]);
+
+
     }
 
     public function actionCardailyamount()
@@ -141,14 +176,22 @@ class AdminreportController extends Controller
         $balance_in_qty = \Yii::$app->request->post('balance_in_qty');
         $sale_qty = \Yii::$app->request->post('sale_qty');
 
+        $cash_qty = \Yii::$app->request->post('cash_qty');
+        $credit_qty = \Yii::$app->request->post('credit_qty');
+        $issue_car_qty = \Yii::$app->request->post('issue_car_qty');
+        $issue_transfer_qty = \Yii::$app->request->post('issue_transfer_qty');
+
         if ($find_product_id == null || $find_product_id == '') {
             $find_product_id = 1;
         }
+
+//        echo 'cash_qty: '.$cash_qty;return;
 
         // if ($prod_rec_qty || $return_qty || $scrap_qty || $counting_qty) {
         $model_shift_all = \common\models\TransactionPosSaleSum::find()->select(['distinct(shift)', 'trans_date'])->where(['date(trans_date)' => date('Y-m-d', strtotime($trans_date))])->all();
         // $model_shift_all = \common\models\TransactionPosSaleSum::find()->where(['>=','id',25663])->all();
         if ($model_shift_all) {
+
             $loop = -1;
             foreach ($model_shift_all as $value) {
                 $loop += 1;
@@ -194,6 +237,24 @@ class AdminreportController extends Controller
                             $model_update->sale_qty = (float)$sale_qty;
                         }
 
+                        if ($cash_qty != null || $cash_qty != '') {
+                            $model_update->cash_qty = (float)$cash_qty;
+                           // echo 'has cash: '.$cash_qty;return;
+                        }
+
+                        if ($credit_qty != null || $credit_qty != '') {
+                            $model_update->credit_qty = (float)$credit_qty;
+                        }
+
+                        if ($issue_car_qty != null || $issue_car_qty != '') {
+                            $model_update->issue_car_qty = (float)$issue_car_qty;
+                        }
+
+                        if ($issue_transfer_qty != null || $issue_transfer_qty != '') {
+                            $model_update->issue_transfer_qty = (float)$issue_transfer_qty;
+                        }
+
+                       // echo 'cash_qtyxป: '.$cash_qty;return;
                         $model_update->save(false);
                     } else {
                         $model_new = new \common\models\CloseDailyAdjust();
@@ -229,6 +290,22 @@ class AdminreportController extends Controller
                         }
                         if ($sale_qty != null || $sale_qty != '') {
                             $model_new->sale_qty = (float)$sale_qty;
+                        }
+
+                        if ($cash_qty != null || $cash_qty != '') {
+                            $model_new->cash_qty = (float)$cash_qty;
+                        }
+
+                        if ($credit_qty != null || $credit_qty != '') {
+                            $model_new->credit_qty = (float)$credit_qty;
+                        }
+
+                        if ($issue_car_qty != null || $issue_car_qty != '') {
+                            $model_new->issue_car_qty = (float)$issue_car_qty;
+                        }
+
+                        if ($issue_transfer_qty != null || $issue_transfer_qty != '') {
+                            $model_new->issue_transfer_qty = (float)$issue_transfer_qty;
                         }
 //                            $model_new->transfer_qty = (float)$transfer_qty;
 //                            $model_new->prodrec_qty = (float)$prod_rec_qty;
@@ -269,6 +346,107 @@ class AdminreportController extends Controller
             'branch_id' => $branch_id,
             'find_product_id' => $find_product_id,
             'data_type_selected' => $data_type_selected,
+        ]);
+    }
+
+    public function actionAddlinenote()
+    {
+        $route_id = \Yii::$app->request->post('route_id');
+        $add_line_date = \Yii::$app->request->post('add_line_date');
+        $add_amount = \Yii::$app->request->post('add_amount');
+        $cash_transfer_amount = \Yii::$app->request->post('cash_transfer_amount');
+
+        if ($route_id) {
+            //  echo $add_line_date;return;
+            $ex = explode(' ', $add_line_date);
+            $ex2 = null;
+            $t_date = null;
+            if ($ex != null) {
+                $ex2 = explode('-', $ex[0]);
+
+                //   print_r($ex2);return;
+                if ($ex2 != null) {
+                    if (count($ex2) > 1) {
+                        $t_date = $ex2[2] . '-' . $ex2[1] . '-' . $ex2[0];
+                    }
+
+                }
+            }
+
+            if ($t_date != null) {
+                $check_has = \common\models\DeliveryNotFullPay::find()->where(['route_id' => $route_id, 'date(trans_date)' => date('Y-m-d', strtotime($t_date))])->one();
+                if (!$check_has) {
+                    $model = new \common\models\DeliveryNotFullPay();
+                    $model->route_id = $route_id;
+                    $model->cash_transfer_amount = $cash_transfer_amount;
+                    $model->not_full_amount = $add_amount;
+                    $model->trans_date = date('Y-m-d', strtotime($t_date));
+                    $model->save(false);
+                }else{
+                    $check_has->not_full_amount = $add_amount;
+                    $check_has->cash_transfer_amount = $cash_transfer_amount;
+                    $check_has->save(false);
+                }
+            }
+        }
+
+        $company_id = 0;
+        $branch_id = 0;
+
+        if (!empty(\Yii::$app->user->identity->company_id)) {
+            $company_id = \Yii::$app->user->identity->company_id;
+        }
+        if (!empty(\Yii::$app->user->identity->branch_id)) {
+            $branch_id = \Yii::$app->user->identity->branch_id;
+        }
+
+        return $this->render('_cardailyamount', [
+            'from_date' => date('Y-m-d', strtotime($t_date)),
+            'to_date' => date('Y-m-d', strtotime($t_date)),
+            'company_id' => $company_id,
+            'branch_id' => $branch_id,
+            'find_emp_id' => 0
+        ]);
+    }
+    public function actionPrintallsummary(){
+        $company_id = 0;
+        $branch_id = 0;
+
+        if (!empty(\Yii::$app->user->identity->company_id)) {
+            $company_id = \Yii::$app->user->identity->company_id;
+        }
+        if (!empty(\Yii::$app->user->identity->branch_id)) {
+            $branch_id = \Yii::$app->user->identity->branch_id;
+        }
+
+        $from_date = \Yii::$app->request->post('from_date');
+        $to_date = \Yii::$app->request->post('to_date');
+        $find_sale_type = \Yii::$app->request->post('find_sale_type');
+        $find_user_id = \Yii::$app->request->post('find_user_id');
+        $is_invoice_req = \Yii::$app->request->post('is_invoice_req');
+        $btn_order_type = \Yii::$app->request->post('btn_order_type');
+
+        return $this->render('_print_sale_all_summary',[
+            'from_date' => $from_date,
+            'to_date' => $to_date,
+            'find_sale_type' => $find_sale_type,
+            'find_user_id' => $find_user_id,
+            'company_id' => $company_id,
+            'branch_id' => $branch_id,
+            'is_invoice_req' => $is_invoice_req,
+            'btn_order_type'=>$btn_order_type,
+        ]);
+    }
+
+    public function actionPrintcarcj()
+    {
+        $from_date = \Yii::$app->request->post('from_date');
+        $to_date = \Yii::$app->request->post('to_date');
+        $route_id = \Yii::$app->request->post('route_id');
+        return $this->render('_cardaily_cj',[
+            'from_date' => $from_date,
+            'to_date' => $to_date,
+            'route_id' => $route_id
         ]);
     }
 }

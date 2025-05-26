@@ -623,7 +623,7 @@ class SalecomreportController extends Controller
             $t_date = $xdate[2] . '-' . $xdate[1] . '-' . $xdate[0];
         }
 
-        // echo date('Y-m-d',$t_date);return;
+        // echo date('Y-m-d',strtotime($t_date));return;
         $model_route_data = [];
         $counted = 0;
         $loop = 0;
@@ -675,10 +675,187 @@ class SalecomreportController extends Controller
                     $total_amt = 0;
                     $xx = 0;
 
-                    $route_emp_count = 0;
+                    $route_emp_count = 0; 
+                    //if($model_route_data[$a]!=920) continue;
+                   $model_check_emp_route = \common\models\Orders::find()->select(['emp_1', 'emp_2'])->where(['order_channel_id' => $model_route_data[$a]])->andFilterWhere(['date(order_date)' => date('Y-m-d', strtotime($t_date))])
+                        ->andFilterWhere(['>', 'order_total_amt', 0])
+                        ->andFilterWhere(['sale_from_mobile' => 1])->groupBy('emp_2')->all();
+                    //echo $model_route_data[$a];return;
+                    if($model_check_emp_route){
+                        foreach ($model_check_emp_route as $valuexx){
+                          // echo("ok");return;
+                          // $route_emp_count = 0;
+                            $model_order_mobile = \common\models\Orders::find()->select(['id', 'order_date', 'order_channel_id', 'car_ref_id', 'emp_1', 'emp_2', 'car_ref_id'])
+                                ->Where(['company_id' => $company_id, 'branch_id' => $branch_id, 'order_channel_id' => $model_route_data[$a]])
+                                ->andFilterWhere(['date(order_date)' => date('Y-m-d', strtotime($t_date))])
+                                ->andFilterWhere(['>', 'order_total_amt', 0])
+                                ->andFilterWhere(['emp_1'=>$valuexx->emp_1])
+                                ->andFilterWhere(['emp_2'=>$valuexx->emp_2])
+                                ->andFilterWhere(['sale_from_mobile' => 1])->all();
+                            //print_r($model_order_mobile);return;
+                            // echo count($model_order_mobile); return;
+                            if ($model_order_mobile) {
+                                foreach ($model_order_mobile as $value) {
+                                    $xx++;
+                                    $com_rate = null;
+                                    $route_emp_count = 0;
 
-                    $model_order_mobile = \common\models\Orders::find()->select(['id', 'order_date', 'order_channel_id', 'car_ref_id', 'emp_1', 'emp_2', 'car_ref_id'])
-                        ->Where(['company_id' => $company_id, 'branch_id' => $branch_id, 'order_channel_id' => $model_route_data[$a]])
+                                    $car_id = $value->car_ref_id;
+                                    $emp_1 = $value->emp_1;
+                                    $emp_2 = $value->emp_2;
+
+                                    if ((int)$emp_1 > 0) {
+                                        $route_emp_count += 1;
+                                    }
+                                    if ((int)$emp_2 > 0) {
+                                        $route_emp_count += 1;
+                                    }
+
+                                    $route_total = null;
+                                    $route_name = \backend\models\Deliveryroute::findName($value->order_channel_id);
+
+                                    $order_data = null;
+                                    if (substr($route_name, 0, 2) == 'CJ') {
+                                        $order_data = $this->getOrderlineCJ($value->id, $company_id, $branch_id);
+                                    } else {
+                                        $order_data = $this->getOrderline($value->id, $company_id, $branch_id);
+                                    }
+
+                                    if ($order_data == null) continue 1;
+                                    // print_r($order_data);return;
+
+
+                                    $com_rate = $this->getComRateBktPrev($route_emp_count, $company_id, $branch_id, $t_date);
+
+                                    $total_qty_all = $total_qty_all + (double)$order_data[0]['total_qty'];
+                                    $total_amt_all = $total_amt_all + (double)$order_data[0]['total_amt'];
+
+                                    $line_com = 0;
+                                    $line_com_2 = 0;
+
+                                    if ($com_rate != null) {
+                                        if (substr($route_name, 0, 2) == 'CJ') {
+
+                                            $com_pack2_rate = $this->getComRateBktPrevPack2($route_emp_count, $company_id, $branch_id, $t_date);
+//                if ($route_emp_count == 1) {
+                                            if ($route_emp_count == 1) {
+                                                if($order_data !=null){
+                                                    $line_com = (($order_data[0]['total_qty']  * $com_pack2_rate[0]['emp_1_rate']));
+                                                }
+                                            }
+
+//                } else {
+//                  $line_com = $order_data[0]['total_qty'] * $com_rate;
+                                            if ($route_emp_count == 2) {
+                                                if($order_data !=null){
+                                                    $line_com = ($order_data[0]['total_qty'] * $com_pack2_rate[0]['emp_1_rate']);
+                                                    $line_com_2 = ($order_data[0]['total_qty'] * $com_pack2_rate[0]['emp_2_rate']);
+                                                }
+                                            }
+
+                                        } else {
+                                            // Other
+
+                                            $order_data_p2 = $this->getOrderlineP2($value->id, $company_id, $branch_id);
+                                            $not_p2_qty = $order_data[0]['total_qty'];
+                                            if ($order_data_p2 != null) {
+                                                $not_p2_qty = $order_data[0]['total_qty'] - $order_data_p2[0]['total_qty'];
+
+                                                $com_pack2_rate = $this->getComRateBktPrevPack2($route_emp_count, $company_id, $branch_id, $t_date);
+                                                if ($route_emp_count == 1) {
+                                                    $line_com = ($not_p2_qty * $com_rate[0]['emp_1_rate']) + ($order_data_p2[0]['total_qty'] * $com_pack2_rate[0]['emp_1_rate']);
+                                                }
+                                                if ($route_emp_count == 2) {
+                                                    $line_com_2 = ($not_p2_qty * $com_rate[0]['emp_2_rate']) + ($order_data_p2[0]['total_qty'] * $com_pack2_rate[0]['emp_2_rate']);
+                                                }
+                                            } else {
+                                                $line_com = $order_data[0]['total_qty'] * $com_rate[0]['emp_1_rate'];
+                                                if ($route_emp_count == 2) {
+                                                    $line_com_2 = $order_data[0]['total_qty'] * $com_rate[0]['emp_2_rate'];
+                                                }
+                                            }
+
+                                            /// NKY
+
+//                                $order_data_p2 = $this->getOrderlineP2($value->id, $company_id, $branch_id);
+//                                $not_p2_qty = $order_data[0]['total_qty'];
+//                                if ($order_data_p2 != null) {
+//                                    $not_p2_qty = $order_data[0]['total_qty'] - $order_data_p2[0]['total_qty'];
+//
+//                                    $line_com = ($not_p2_qty * $com_rate[0]['emp_1_rate']) + ($order_data_p2[0]['total_qty'] * 1.75);
+//                                    if ($route_emp_count == 2) {
+//                                        $line_com_2 = ($not_p2_qty * $com_rate[0]['emp_2_rate']) + ($order_data_p2[0]['total_qty'] * 1.75);
+//                                    }
+//                                } else {
+//                                    $line_com = $order_data[0]['total_qty'] * $com_rate[0]['emp_1_rate'];
+//                                    if ($route_emp_count == 2) {
+//                                        $line_com_2 = $order_data[0]['total_qty'] * $com_rate[0]['emp_2_rate'];
+//                                    }
+//                                }
+
+                                            // $line_com = $order_data[0]['total_qty'] * $com_rate;
+                                        }
+                                    }
+
+                                    $total_amt = ($total_amt + $order_data[0]['total_amt']);
+
+                                    $line_com_total = $line_com;
+                                    $line_com_total_2 = $line_com_2;
+
+                                    $total_com_all = $total_com_all + $line_com_total;
+                                    $total_com_all_2 = $total_com_all_2 + $line_com_total_2;
+
+                                }
+                            } else {
+                                //echo $val->order_channel_id;
+                            }
+
+                            //echo $xx;return;
+
+                            \common\models\ComDailyCal::deleteAll(['date(trans_date)' => date('Y-m-d', strtotime($t_date)), 'route_id' => $model_route_data[$a]]);
+
+                            $line_special = 0;
+                            $extra_data = $this->getComspecial(date('Y-m-d', strtotime($t_date)), date('Y-m-d', strtotime($t_date)));
+
+                            if ($extra_data != null) {
+                                // echo $route_emp_count.' '. $total_amt.' '. $extra_data[0]['sale_price'];return;
+                                $line_special = (float)$total_amt >= (float)$extra_data[0]['sale_price'] && $route_emp_count == 1 ? (float)$extra_data[0]['com_extra'] : 0;
+                                //  $line_special = (float)$total_amt >= (float)$extra_data[0]['sale_price'] && $route_emp_count == 1 ? $route_emp_count : 0;
+                                $total_special_all = $total_special_all + $line_special;
+                                $total_com_sum_all = $total_com_sum_all + ($total_com_all + $line_special + $total_com_all_2);
+                            } else {
+                                $total_com_sum_all = $total_com_sum_all + ($total_com_all + $total_com_all_2);
+                            }
+
+//        $line_special = $total_amt >= 3500 && $route_emp_count == 1 ? 30 : 0;
+//        $total_special_all = $total_special_all + $line_special;
+//        $total_com_sum_all = $total_com_sum_all + ($total_com_all + $line_special);
+
+                            if ($emp_1 == 0 || $total_qty_all <= 0) continue;
+
+                            $model_com_daily = new \common\models\ComDailyCal();
+                            $model_com_daily->trans_date = date('Y-m-d H:i:s', strtotime($t_date));
+                            $model_com_daily->emp_1 = $emp_1;
+                            $model_com_daily->emp_2 = $emp_2;
+                            $model_com_daily->total_qty = $total_qty_all;
+                            $model_com_daily->total_amt = $total_amt;
+                            $model_com_daily->line_com_amt = $total_com_all;
+                            $model_com_daily->line_com_amt_2 = $total_com_all_2;
+                            $model_com_daily->line_com_special_amt = $total_special_all;
+                            $model_com_daily->line_total_amt = $total_com_sum_all;
+                            $model_com_daily->created_at = time();
+                            $model_com_daily->route_id = $model_route_data[$a];
+                            $model_com_daily->car_id = $car_id;
+                            $model_com_daily->company_id = $company_id;
+                            $model_com_daily->branch_id = $branch_id;
+                            $model_com_daily->save(false);
+                        }
+                    }
+
+                    
+
+                    /*$model_order_mobile = \common\models\Orders::find()->select(['id', 'order_date', 'order_channel_id', 'car_ref_id', 'emp_1', 'emp_2', 'car_ref_id'])
+                        ->Where(['company_idx' => $company_id, 'branch_id' => $branch_id, 'order_channel_id' => $model_route_data[$a]])
                         ->andFilterWhere(['date(order_date)' => date('Y-m-d', strtotime($t_date))])
                         ->andFilterWhere(['>', 'order_total_amt', 0])
                         ->andFilterWhere(['sale_from_mobile' => 1])->all();
@@ -834,7 +1011,7 @@ class SalecomreportController extends Controller
                     $model_com_daily->car_id = $car_id;
                     $model_com_daily->company_id = $company_id;
                     $model_com_daily->branch_id = $branch_id;
-                    $model_com_daily->save(false);
+                    $model_com_daily->save(false); */
 
                 }
             }
@@ -1237,7 +1414,7 @@ class SalecomreportController extends Controller
 
         $rate = [];
         //   $model = \backend\models\Salecom::find()->where(['emp_qty' => $count, 'company_id' => $company_id, 'branch_id' => $branch_id,'emp_qty'=>$count])->andFilterWhere(['<=', 'date(from_date)', date('Y-m-d',strtotime($for_cal_date))])->andFilterWhere(['>=', 'date(to_date)', date('Y-m-d',strtotime($for_cal_date))])->one();
-        $model = \backend\models\Salecom::find()->where(['emp_qty' => $count, 'company_id' => $company_id, 'branch_id' => $branch_id, 'emp_qty' => $count,'product_id'=>4])->andFilterWhere(['>=', 'date(to_date)', date('Y-m-d', strtotime($for_cal_date))])->one();
+        $model = \backend\models\Salecom::find()->where(['emp_qty' => $count, 'company_id' => $company_id, 'branch_id' => $branch_id, 'emp_qty' => $count,'product_id'=>69])->andFilterWhere(['>=', 'date(to_date)', date('Y-m-d', strtotime($for_cal_date))])->one();
         // $model = \backend\models\Salecom::find()->where(['emp_qty' => $count, 'company_id' => $company_id, 'branch_id' => $branch_id])->one();
         if ($model) {
             if ($count == 1) {

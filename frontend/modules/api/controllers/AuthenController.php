@@ -143,7 +143,7 @@ class AuthenController extends Controller
         }
         $data = [];
         if ($car != '' && $driver != '') {
-            $find_user_id = \backend\models\Employee::findUserid($driver);
+            $find_user_id = \backend\models\Employee::findUserid(trim($driver));
             $model = \common\models\User::find()->where(['id' => $find_user_id])->one();
             if ($model) {
 //                //  if ($model->validatePassword($password)) {
@@ -223,6 +223,8 @@ class AuthenController extends Controller
                             }
                         }
                     }
+                }else{
+                    $status = 10;
                 }
 //                // }
             }

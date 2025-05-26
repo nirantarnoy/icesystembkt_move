@@ -5,9 +5,7 @@ namespace backend\controllers;
 use common\models\QueryPaymentReceive;
 use Yii;
 use backend\models\PaymenttermSearch;
-use yii\filters\AccessControl;
 use yii\web\Controller;
-use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
@@ -26,24 +24,6 @@ class PaymentrechistoryController extends Controller
                     'delete' => ['POST'],
                 ],
             ],
-//            'access'=>[
-//                'class'=>AccessControl::className(),
-//                'denyCallback' => function ($rule, $action) {
-//                    throw new ForbiddenHttpException('คุณไม่ได้รับอนุญาติให้เข้าใช้งาน!');
-//                },
-//                'rules'=>[
-//                    [
-//                        'allow'=>true,
-//                        'roles'=>['@'],
-//                        'matchCallback'=>function($rule,$action){
-//                            $currentRoute = Yii::$app->controller->getRoute();
-//                            if(Yii::$app->user->can($currentRoute)){
-//                                return true;
-//                            }
-//                        }
-//                    ]
-//                ]
-//            ],
         ];
     }
 
@@ -104,13 +84,13 @@ class PaymentrechistoryController extends Controller
         $to_date = \Yii::$app->request->post('to_date');
         //  $find_sale_type = \Yii::$app->request->post('find_sale_type');
         $find_user_id = \Yii::$app->request->post('find_user_id');
-        $find_customer_id = \Yii::$app->request->post('find_customer_id');
+        $find_cus_id = \Yii::$app->request->post('find_cus_id');
         return $this->render('_print_car_payment', [
             'from_date' => $from_date,
             'to_date' => $to_date,
             //    'find_sale_type'=>$find_sale_type,
             'find_user_id' => $find_user_id,
-            'find_customer_id' => $find_customer_id,
+            'find_cus_id' => $find_cus_id,
             'company_id' => $company_id,
             'branch_id' => $branch_id,
         ]);

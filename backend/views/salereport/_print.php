@@ -19,6 +19,10 @@ if ($find_from_date != null) {
     $to_date = date('Y-m-d H:i', strtotime($find_to_date));
 }
 
+$is_admin = \backend\models\User::checkIsAdmin(\Yii::$app->user->id);
+
+include \Yii::getAlias("@backend/helpers/ChangeAdminDate2.php");
+
 
 ?>
 <html>

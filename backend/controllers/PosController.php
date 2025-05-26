@@ -43,7 +43,7 @@ class PosController extends Controller
                         'actions' => [
                             'logout', 'index', 'indextest', 'indextest2', 'print', 'printindex', 'dailysum', 'getcustomerprice', 'getoriginprice', 'closesale', 'cancelorder', 'manageclose',
                             'salehistory', 'getbasicprice', 'delete', 'orderedit', 'posupdate', 'posttrans', 'saledailyend', 'saledailyend2', 'printdo', 'createissue', 'updatestock', 'listissue', 'updateissue', 'printsummary','printpossummary', 'printcarsummary','startcaldailymanager'
-                            , 'finduserdate', 'editsaleclose', 'createscreenshort', 'print2', 'calcloseshift', 'closesaletest','printtestnew','printtestnewdo'
+                            , 'finduserdate', 'editsaleclose', 'createscreenshort', 'print2', 'calcloseshift', 'closesaletest','printtestnew','printtestnewdo','printsummarycarnky','printsummaryposnky'
                         ],
                         'allow' => true,
                         'roles' => ['@'],
@@ -1186,6 +1186,8 @@ class PosController extends Controller
         }
 
 
+
+
         $from_date_time = null;
         $to_date_time = null;
 
@@ -1223,6 +1225,12 @@ class PosController extends Controller
                 $to_date_time = date('Y-m-d H:i:s', strtotime($nn_date . ' ' . $t_time));
             }
         }
+
+        $is_admin = \backend\models\User::checkIsAdmin(\Yii::$app->user->id);
+
+        include \Yii::getAlias("@backend/helpers/ChangeAdminDate4.php");
+
+      //  echo $from_date_time;return;
 
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
         $dataProvider->query->select(['code', 'name', 'price', 'SUM(qty) as qty',
@@ -1574,20 +1582,21 @@ class PosController extends Controller
                     $model_trans = new \common\models\TransactionPosSaleSum();
                     $model_trans->trans_date = $cal_date;
                     $model_trans->product_id = $line_prod_id[$i];
-                    $model_trans->cash_qty = $line_cash_qty[$i];
-                    $model_trans->credit_qty = $line_credit_qty[$i];//$new_line_credit_qty;
+                    $model_trans->cash_qty = $this->getSalecashQty($line_prod_id[$i], $user_id, $login_date, date('Y-m-d H:i:s'), $company_id, $branch_id);//$line_cash_qty[$i];
+                    $model_trans->credit_qty = $this->getSaleCreditQty($line_prod_id[$i], $user_id, $login_date, date('Y-m-d H:i:s'), $company_id, $branch_id); // $line_credit_qty[$i];//$new_line_credit_qty;
                     $model_trans->free_qty = $this->getFreeQty($line_prod_id[$i], $user_id, $login_date, date('Y-m-d H:i:s'), $company_id, $branch_id); //0;
                     $model_trans->balance_in_qty = $line_balance_in[$i];
                     $model_trans->balance_out_qty = 0;
                     $model_trans->prodrec_qty = $line_production_qty[$i];
                     $model_trans->reprocess_qty = $line_repack_qty[$i];
-                    $model_trans->return_qty = $this->getProdReprocessCarDaily($line_prod_id[$i], $login_date, date('Y-m-d H:i:s'), $company_id, $branch_id);
-                    $model_trans->issue_car_qty = $this->getIssueCarQty($line_prod_id[$i], $user_id, $login_date, date('Y-m-d H:i:s'), $company_id, $branch_id); //$line_car_issue_qty[$i];//$isssue_car_qty;
-                    $model_trans->issue_transfer_qty = $line_transfer_qty[$i];// $this->getTransferout($value->product_id, $cal_date);
+                    $model_trans->return_qty = $this->getProdReprocessCarDaily($line_prod_id[$i], $login_date, date('Y-m-d H:i:s'), $company_id, $branch_id,$user_id);
+                    $model_trans->issue_car_qty = $this->getIssueCarQtyNew($line_prod_id[$i], $user_id, $login_date, date('Y-m-d H:i:s'), $company_id, $branch_id); //$line_car_issue_qty[$i];//$isssue_car_qty;
+                    $model_trans->issue_transfer_qty = $this->getSaleOtherRouteQty($line_prod_id[$i], $user_id, $login_date, date('Y-m-d H:i:s'), $company_id, $branch_id); // $line_transfer_qty[$i];// $this->getTransferout($value->product_id, $cal_date);
                     $model_trans->issue_refill_qty = $line_refill_qty[$i];
                     $model_trans->scrap_qty = $line_scrap_qty[$i];//$this->getScrapDaily($value->product_id, $user_login_datetime, $cal_date);
                     $model_trans->counting_qty = $line_stock_count[$i];
                     $model_trans->shift = $cur_shift;//$this->checkDailyShift($cal_date);
+                    $model_trans->transfer_in_qty = $this->getTransferInQty($line_prod_id[$i], $user_id, $login_date, date('Y-m-d H:i:s'), $company_id, $branch_id);
                     $model_trans->company_id = $company_id;
                     $model_trans->branch_id = $branch_id;
                     $model_trans->user_id = $user_id;
@@ -1603,6 +1612,102 @@ class PosController extends Controller
         return $res;
     }
 
+    function getSalecashQty($product_id, $user_id, $user_login_datetime, $t_date, $company_id, $branch_id){
+        $qty = 0;
+        if($user_id!=null){
+            $sql = "SELECT  SUM(order_line.qty) as cash_qty";
+            $sql .= " FROM orders inner join order_line on orders.id = order_line.order_id";
+            $sql .= " WHERE orders.sale_channel_id = 2 and orders.status <> 3 ";
+            $sql .= " AND orders.payment_method_id = 1";
+            $sql .= " AND orders.order_date>=" . "'" . date('Y-m-d H:i:s', strtotime($user_login_datetime)) . "'";
+            $sql .= " AND orders.order_date<=" . "'" . date('Y-m-d H:i:s') . "'";
+            $sql .= " AND order_line.product_id=" . $product_id;
+            $sql .= " AND orders.created_by=" . $user_id;
+            $sql .= " GROUP BY order_line.product_id";
+
+            $query = \Yii::$app->db->createCommand($sql);
+            $model = $query->queryAll();
+            if ($model) {
+                for ($i = 0; $i <= count($model) - 1; $i++) {
+                    $qty = $model[$i]['cash_qty'];
+                }
+            }
+        }
+        return $qty;
+    }
+    function getSalecreditQty($product_id, $user_id, $user_login_datetime, $t_date, $company_id, $branch_id){
+        $qty = 0;
+        if($user_id!=null){
+            $sql = "SELECT  SUM(order_line.qty) as cash_qty";
+            $sql .= " FROM orders inner join order_line on orders.id = order_line.order_id";
+            $sql .= " WHERE orders.sale_channel_id = 2 and orders.status <> 3 ";
+            $sql .= " AND orders.payment_method_id = 2";
+            $sql .= " AND orders.order_channel_id is null";
+            $sql .= " AND orders.order_date>=" . "'" . date('Y-m-d H:i:s', strtotime($user_login_datetime)) . "'";
+            $sql .= " AND orders.order_date<=" . "'" . date('Y-m-d H:i:s') . "'";
+            $sql .= " AND order_line.product_id=" . $product_id;
+            $sql .= " AND orders.created_by=" . $user_id;
+            $sql .= " GROUP BY order_line.product_id";
+
+            $query = \Yii::$app->db->createCommand($sql);
+            $model = $query->queryAll();
+            if ($model) {
+                for ($i = 0; $i <= count($model) - 1; $i++) {
+                    $qty = $model[$i]['cash_qty'];
+                }
+            }
+        }
+        return $qty;
+    }
+    function getSaleOtherRouteQty($product_id, $user_id, $user_login_datetime, $t_date, $company_id, $branch_id){
+        $qty = 0;
+        if($user_id!=null){
+            $sql = "SELECT  SUM(order_line.qty) as cash_qty";
+            $sql .= " FROM orders inner join order_line on orders.id = order_line.order_id inner join delivery_route on orders.order_channel_id = delivery_route.id";
+            $sql .= " WHERE orders.sale_channel_id = 2 and orders.status <> 3 ";
+            $sql .= " AND orders.order_date>=" . "'" . date('Y-m-d H:i:s', strtotime($user_login_datetime)) . "'";
+            $sql .= " AND orders.order_date<=" . "'" . date('Y-m-d H:i:s') . "'";
+            $sql .= " AND order_line.product_id=" . $product_id;
+            $sql .= " AND orders.created_by=" . $user_id;
+            $sql .= " AND delivery_route.is_other_branch=1";
+            $sql .= " AND (orders.order_channel_id > 0  AND not orders.order_channel_id is null)";
+            $sql .= " GROUP BY order_line.product_id";
+
+            $query = \Yii::$app->db->createCommand($sql);
+            $model = $query->queryAll();
+            if ($model) {
+                for ($i = 0; $i <= count($model) - 1; $i++) {
+                    $qty = $model[$i]['cash_qty'];
+                }
+            }
+        }
+        return $qty;
+    }
+
+    function getTransferInQty($product_id, $user_id, $user_login_datetime, $t_date, $company_id, $branch_id){
+        $qty = 0;
+        if($user_id!=null){
+            $sql = "SELECT  SUM(qty) as qty";
+            $sql .= " FROM stock_trans";
+            $sql .= " WHERE activity_type_id = 15";
+            $sql .= " AND not transfer_branch_id is null";
+            $sql .= " AND trans_date >=" . "'" . date('Y-m-d H:i:s', strtotime($user_login_datetime)) . "'";
+            $sql .= " AND trans_date <=" . "'" . date('Y-m-d H:i:s') . "'";
+            $sql .= " AND product_id=" . $product_id;
+            // $sql .= " AND orders.created_by=" . $user_id;
+            $sql .= " GROUP BY product_id";
+
+            $query = \Yii::$app->db->createCommand($sql);
+            $model = $query->queryAll();
+            if ($model) {
+                for ($i = 0; $i <= count($model) - 1; $i++) {
+                    $qty = $model[$i]['qty'];
+                }
+            }
+        }
+        return $qty;
+    }
+
     function getIssueCarQty($product_id, $user_id, $user_login_datetime, $t_date, $company_id, $branch_id)
     {
         $qty = 0;
@@ -1610,6 +1715,30 @@ class PosController extends Controller
             $qty = \common\models\QuerySalePosData::find()->where(['created_by' => $user_id, 'product_id' => $product_id])
                 ->andFilterWhere(['between', 'order_date', date('Y-m-d H:i:s', strtotime($user_login_datetime)), date('Y-m-d H:i:s', strtotime($t_date))])
                 ->andFilterWhere(['company_id' => $company_id, 'branch_id' => $branch_id, 'payment_method_id' => 2])->andFilterWhere(['>', 'order_channel_id', 0])->sum('line_qty_credit');
+        }
+        return $qty;
+    }
+    function getIssueCarQtyNew($product_id, $user_id, $user_login_datetime, $t_date, $company_id, $branch_id){
+        $qty = 0;
+        if($user_id!=null){
+            $sql = "SELECT  SUM(order_line.qty) as cash_qty";
+            $sql .= " FROM orders inner join order_line on orders.id = order_line.order_id inner join delivery_route on orders.order_channel_id = delivery_route.id";
+            $sql .= " WHERE orders.sale_channel_id = 2 and orders.status <> 3 ";
+            $sql .= " AND orders.order_date>=" . "'" . date('Y-m-d H:i:s', strtotime($user_login_datetime)) . "'";
+            $sql .= " AND orders.order_date<=" . "'" . date('Y-m-d H:i:s') . "'";
+            $sql .= " AND order_line.product_id=" . $product_id;
+            $sql .= " AND orders.created_by=" . $user_id;
+            $sql .= " AND delivery_route.is_other_branch= 0";
+            $sql .= " AND (orders.order_channel_id > 0  AND not orders.order_channel_id is null)";
+            $sql .= " GROUP BY order_line.product_id";
+
+            $query = \Yii::$app->db->createCommand($sql);
+            $model = $query->queryAll();
+            if ($model) {
+                for ($i = 0; $i <= count($model) - 1; $i++) {
+                    $qty = $model[$i]['cash_qty'];
+                }
+            }
         }
         return $qty;
     }
@@ -1624,18 +1753,41 @@ class PosController extends Controller
         return $qty;
     }
 
-    function getProdReprocessCarDaily($product_id, $user_login_datetime, $t_date, $company_id, $branch_id)
+//    function getProdReprocessCarDaily($product_id, $user_login_datetime, $t_date, $company_id, $branch_id)
+//    {
+//        $qty = 0;
+//        if ($product_id != null) {
+//            //  $qty = \backend\models\Stocktrans::find()->where(['in', 'activity_type_id', [26, 27]])->andFilterWhere(['product_id' => $product_id])->andFilterWhere(['between', 'trans_date', date('Y-m-d H:i:s', strtotime($user_login_datetime)), date('Y-m-d H:i:s', strtotime($t_date))])->sum('qty');
+//            $qty = \backend\models\Stocktrans::find()->where(['in', 'activity_type_id', [26]])->andFilterWhere(['product_id' => $product_id])
+//                ->andFilterWhere(['between', 'trans_date', date('Y-m-d H:i:s', strtotime($user_login_datetime)), date('Y-m-d H:i:s', strtotime($t_date))])
+//                ->andFilterWhere(['company_id' => $company_id, 'branch_id' => $branch_id])->sum('qty');
+//        }
+//
+//        return $qty;
+//    }
+
+    function getProdReprocessCarDaily($product_id, $user_login_datetime, $t_date, $company_id, $branch_id, $user_id)
     {
         $qty = 0;
         if ($product_id != null) {
+            $second_user = $this->getLoginPartner($user_id);
             //  $qty = \backend\models\Stocktrans::find()->where(['in', 'activity_type_id', [26, 27]])->andFilterWhere(['product_id' => $product_id])->andFilterWhere(['between', 'trans_date', date('Y-m-d H:i:s', strtotime($user_login_datetime)), date('Y-m-d H:i:s', strtotime($t_date))])->sum('qty');
-            $qty = \backend\models\Stocktrans::find()->where(['in', 'activity_type_id', [26]])->andFilterWhere(['product_id' => $product_id])
-                ->andFilterWhere(['between', 'trans_date', date('Y-m-d H:i:s', strtotime($user_login_datetime)), date('Y-m-d H:i:s', strtotime($t_date))])
-                ->andFilterWhere(['company_id' => $company_id, 'branch_id' => $branch_id])->sum('qty');
+            if($second_user !=null){
+                $qty = \backend\models\Stocktrans::find()->where(['in', 'activity_type_id', [26]])->andFilterWhere(['product_id' => $product_id])
+                    ->andFilterWhere(['created_by' => $second_user])
+                    ->andFilterWhere(['between', 'trans_date', date('Y-m-d H:i:s', strtotime($user_login_datetime)), date('Y-m-d H:i:s', strtotime($t_date))])
+                    ->andFilterWhere(['company_id' => $company_id, 'branch_id' => $branch_id])->sum('qty');
+            }else{
+                $qty = \backend\models\Stocktrans::find()->where(['in', 'activity_type_id', [26]])->andFilterWhere(['product_id' => $product_id])
+                    ->andFilterWhere(['between', 'trans_date', date('Y-m-d H:i:s', strtotime($user_login_datetime)), date('Y-m-d H:i:s', strtotime($t_date))])
+                    ->andFilterWhere(['company_id' => $company_id, 'branch_id' => $branch_id])->sum('qty');
+            }
+
         }
 
         return $qty;
     }
+
 
     function getReturnCarReprocess($product_id, $login_date)
     {
@@ -1657,6 +1809,22 @@ class PosController extends Controller
             }
         }
         return $login_date;
+    }
+    public function getLoginPartner($user_id)
+    {
+        $id = [];
+        if ($user_id) {
+            $model = \common\models\LoginLogCal::find()->where(['user_id' => $user_id])->limit(1)->orderBy(['id' => SORT_DESC])->one();
+            if ($model) {
+                $model_user_ref = \common\models\LoginUserRef::find()->select('user_id')->where(['login_log_cal_id' => $model->id])->all();
+                if ($model_user_ref) {
+                    foreach ($model_user_ref as $value) {
+                        array_push($id, $value->user_id);
+                    }
+                }
+            }
+        }
+        return $id;
     }
 
     public function getTransShift($company_id, $branch_id)
@@ -2864,6 +3032,70 @@ class PosController extends Controller
             }
         }
         return $data;
+    }
+
+    public function actionPrintsummarycarnky()
+    {
+        $company_id = 0;
+        $branch_id = 0;
+
+        if (!empty(\Yii::$app->user->identity->company_id)) {
+            $company_id = \Yii::$app->user->identity->company_id;
+        }
+        if (!empty(\Yii::$app->user->identity->branch_id)) {
+            $branch_id = \Yii::$app->user->identity->branch_id;
+        }
+
+        $from_date = \Yii::$app->request->post('from_date');
+        $to_date = \Yii::$app->request->post('to_date');
+        $find_sale_type = \Yii::$app->request->post('find_sale_type');
+        $find_user_id = \Yii::$app->request->post('find_user_id');
+        $is_invoice_req = \Yii::$app->request->post('is_invoice_req');
+        $btn_order_type = \Yii::$app->request->post('btn_order_type');
+        $is_admin = \backend\models\User::checkIsAdmin(\Yii::$app->user->id);
+        return $this->render('_print_sale_summary_car_nky_new', [
+            'from_date' => $from_date,
+            'to_date' => $to_date,
+            'find_sale_type' => $find_sale_type,
+            'find_user_id' => $find_user_id,
+            'company_id' => $company_id,
+            'branch_id' => $branch_id,
+            'is_invoice_req' => $is_invoice_req,
+            'btn_order_type'=>$btn_order_type,
+            'is_admin' => $is_admin,
+        ]);
+    }
+
+    public function actionPrintsummaryposnky()
+    {
+        $company_id = 0;
+        $branch_id = 0;
+
+        if (!empty(\Yii::$app->user->identity->company_id)) {
+            $company_id = \Yii::$app->user->identity->company_id;
+        }
+        if (!empty(\Yii::$app->user->identity->branch_id)) {
+            $branch_id = \Yii::$app->user->identity->branch_id;
+        }
+
+        $from_date = \Yii::$app->request->post('from_date');
+        $to_date = \Yii::$app->request->post('to_date');
+        $find_sale_type = \Yii::$app->request->post('find_sale_type');
+        $find_user_id = \Yii::$app->request->post('find_user_id');
+        $is_invoice_req = \Yii::$app->request->post('is_invoice_req');
+        $btn_order_type = \Yii::$app->request->post('btn_order_type');
+        $is_admin = \backend\models\User::checkIsAdmin(\Yii::$app->user->id);
+        return $this->render('_print_sale_summary_pos_nky', [
+            'from_date' => $from_date,
+            'to_date' => $to_date,
+            'find_sale_type' => $find_sale_type,
+            'find_user_id' => $find_user_id,
+            'company_id' => $company_id,
+            'branch_id' => $branch_id,
+            'is_invoice_req' => $is_invoice_req,
+            'btn_order_type'=>$btn_order_type,
+            'is_admin'=>$is_admin,
+        ]);
     }
 
 }

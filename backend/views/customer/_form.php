@@ -73,7 +73,17 @@ if (!empty(\Yii::$app->user->identity->branch_id)) {
             <?= $form->field($model, 'phone')->textInput(['maxlength' => true]) ?>
         </div>
         <div class="col-lg-3">
-            <?= $form->field($model, 'active_date')->textInput() ?>
+              <?php $model->active_date = $model->isNewRecord?date('Y-m-d'):date('Y-m-d',strtotime($model->active_date)); ?>
+            <?= $form->field($model, 'active_date')->widget(\kartik\date\DatePicker::className(),[
+                'value' => date('Y-m-d'),
+                'options' => [
+                    'disabled' => true
+                ],
+                'pluginOptions' => [
+                    'format' => 'dd-mm-yyyy',
+                ]
+            ]) ?>
+
         </div>
         <div class="col-lg-3">
             <?= $form->field($model, 'payment_method_id')->widget(\kartik\select2\Select2::className(), [

@@ -18,9 +18,6 @@ $date_enable = true;
 if ($is_admin == 1) {
     $date_enable = false;
 }
-if(\Yii::$app->user->identity->username == 'beau' || \Yii::$app->user->identity->username == 'dow'){
-    $date_enable = false;
-}
 
 ?>
 
@@ -96,7 +93,6 @@ if(\Yii::$app->user->identity->username == 'beau' || \Yii::$app->user->identity-
                     <th style="text-align: center">เลขที่</th>
                     <th style="text-align: center">วันที่</th>
                     <th style="text-align: center">ช่องทางชำระ</th>
-                    <!--                    <th style="text-align: center">แนบเอกสาร</th>-->
                     <th style="text-align: center">ค้างชำระ</th>
                     <th style="text-align: center">ยอดชำระ</th>
                 </tr>
@@ -145,8 +141,7 @@ if(\Yii::$app->user->identity->username == 'beau' || \Yii::$app->user->identity-
                             </td>
                             <td>
                                 <input type="text" class="form-control line-remain" style="text-align: right"
-                                       name="line_remain[]" value="<?= number_format($value->remain_amount, 2) ?>"
-                                       readonly>
+                                       name="line_remain[]" value="<?= number_format($value->remain_amount, 4) ?>" readonly>
                                 <input type="hidden" class="line-remain-qty"
                                        value="<?= number_format($value->remain_amount, 2) ?>">
                             </td>
@@ -171,13 +166,12 @@ if(\Yii::$app->user->identity->username == 'beau' || \Yii::$app->user->identity-
     </div>
     <?php if ($model->isNewRecord): ?>
         <div class="row show-button-payment" style="display: none;">
-            <div class="col-lg-9">
+            <div class="col-lg-4">
                 <div class="btn btn-primary" onclick="selectallcash();">ชำระด้วยเงินสดทั้งหมด</div>
                 <div class="btn btn-warning" onclick="selectallbank();">ชำระด้วยเงินโอนทั้งหมด</div>
-
             </div>
-            <div class="col-lg-3" style="text-align: right">
-
+            <div class="col-lg-3" style="text-align: left">
+                <input type="file" class="form-control-file" style="padding: 5px;background: #1ab6cf;color: black;" name="receive_doc[]"  title="เลือกไฟล์แนบ">
             </div>
         </div>
     <?php endif; ?>
@@ -203,12 +197,18 @@ var selecteditem = [];
 $(function(){
    
 });
-
+function pullremain(e){
+    //alert(e.val());
+    var xvalue = e.closest("tr").find(".line-remain-qty").val();
+    e.closest('tr').find(".line-pay").val(xvalue);
+    calpayment();
+}
 function linepaychange(e){
    // alert();
     var remain_amount = e.closest('tr').find('.line-remain-qty').val();
-    var pay = e.val();
-    //alert(e.val());
+    //var pay = e.val();
+   // e.val(remain_amount);
+  //  alert(e.val());
    // e.val(100);
     // if( parseFloat(pay).toFixed(2) > parseFloat(remain_amount).toFixed(2)){
     //     alert('ชำระเงินมากกว่ายอดค้างชำระ');

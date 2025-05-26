@@ -39,6 +39,10 @@ $mpdf->AddPageByArray([
     'margin-bottom' => 1,
 ]);
 
+$is_admin = \backend\models\User::checkIsAdmin(\Yii::$app->user->id);
+
+include \Yii::getAlias("@backend/helpers/ChangeAdminDate2.php");
+
 $model_emp_counting = null;
 
 if ($from_date != null && $to_date != null && $find_emp_user_id != null) {

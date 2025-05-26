@@ -413,7 +413,7 @@ $model_line = $dataProvider->getModels();
                                 <td style="text-align: center;border: 1px solid grey">1</td>
                                 <td style="text-align: center;border: 1px solid grey">เงินสด</td>
                                 <td style="text-align: center;border: 1px solid grey"></td>
-                                <td style="text-align: center;border: 1px solid grey"><?= number_format($cash_pay + ($total_all_cash)) ?></td>
+                                <td style="text-align: center;border: 1px solid grey"><?= number_format($cash_pay) ?></td>
                             </tr>
                         <?php endif; ?>
                         <?php if ($bank_pay > 0): ?>
@@ -421,9 +421,13 @@ $model_line = $dataProvider->getModels();
                                 <td style="text-align: center;border: 1px solid grey">2</td>
                                 <td style="text-align: center;border: 1px solid grey">โอนธนาคาร</td>
                                 <td style="text-align: center;border: 1px solid grey"></td>
-                                <td style="text-align: center;border: 1px solid grey"><?= number_format($bank_pay + ($total_all_cash)) ?></td>
+                                <td style="text-align: center;border: 1px solid grey"><?= number_format($bank_pay) ?></td>
                             </tr>
                         <?php endif; ?>
+                        <tr>
+                            <td style="text-align: right;border: 1px solid grey" colspan="3">รวมส่งเงิน</td>
+                            <td style="text-align: center;border: 1px solid grey"><?= number_format( $cash_pay + $total_all_cash) ?></td>
+                        </tr>
                     </table>
                 </div>
             </div>
@@ -768,6 +772,7 @@ function getPayment($route_id, $order_date)
     $sql .= " FROM query_payment_receive as t1 INNER JOIN customer as t2 ON t1.customer_id = t2.id";
     $sql .= " WHERE  date(t1.trans_date) =" . "'" . date('Y-m-d', strtotime($order_date)) . "'" . " ";
     $sql .= " AND t1.payment_method_id = 2";
+    $sql .= " AND t1.payment_channel_id = 1";
     if ($route_id != null) {
         $sql .= " AND t2.delivery_route_id=" . $route_id;
     }
@@ -789,7 +794,7 @@ function getPaymentBank($route_id, $order_date)
     $sql = "SELECT SUM(t1.payment_amount) as pay_amount";
     $sql .= " FROM query_payment_receive as t1 INNER JOIN customer as t2 ON t1.customer_id = t2.id";
     $sql .= " WHERE  date(t1.trans_date) =" . "'" . date('Y-m-d', strtotime($order_date)) . "'" . " ";
-    $sql .= " AND t1.payment_channel_id = 3";
+    $sql .= " AND t1.payment_channel_id = 2";
     if ($route_id != null) {
         $sql .= " AND t2.delivery_route_id=" . $route_id;
     }
@@ -803,6 +808,50 @@ function getPaymentBank($route_id, $order_date)
     }
     return $pay_amount;
 }
+
+//function getPayment($route_id, $order_date)
+//{
+//    $pay_amount = 0;
+//
+//    $sql = "SELECT SUM(t1.payment_amount) as pay_amount";
+//    $sql .= " FROM query_payment_receive as t1 INNER JOIN customer as t2 ON t1.customer_id = t2.id";
+//    $sql .= " WHERE  date(t1.trans_date) =" . "'" . date('Y-m-d', strtotime($order_date)) . "'" . " ";
+//    $sql .= " AND t1.payment_method_id = 2";
+//    if ($route_id != null) {
+//        $sql .= " AND t2.delivery_route_id=" . $route_id;
+//    }
+//    $sql .= " GROUP BY t2.delivery_route_id";
+//    $query = \Yii::$app->db->createCommand($sql);
+//    $model = $query->queryAll();
+//    if ($model) {
+//        for ($i = 0; $i <= count($model) - 1; $i++) {
+//            $pay_amount = $model[$i]['pay_amount'];
+//        }
+//    }
+//    return $pay_amount;
+//}
+//
+//function getPaymentBank($route_id, $order_date)
+//{
+//    $pay_amount = 0;
+//
+//    $sql = "SELECT SUM(t1.payment_amount) as pay_amount";
+//    $sql .= " FROM query_payment_receive as t1 INNER JOIN customer as t2 ON t1.customer_id = t2.id";
+//    $sql .= " WHERE  date(t1.trans_date) =" . "'" . date('Y-m-d', strtotime($order_date)) . "'" . " ";
+//    $sql .= " AND t1.payment_channel_id = 3";
+//    if ($route_id != null) {
+//        $sql .= " AND t2.delivery_route_id=" . $route_id;
+//    }
+//    $sql .= " GROUP BY t2.delivery_route_id";
+//    $query = \Yii::$app->db->createCommand($sql);
+//    $model = $query->queryAll();
+//    if ($model) {
+//        for ($i = 0; $i <= count($model) - 1; $i++) {
+//            $pay_amount = $model[$i]['pay_amount'];
+//        }
+//    }
+//    return $pay_amount;
+//}
 
 function orderdiscount($route_id)
 {

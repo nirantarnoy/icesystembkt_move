@@ -11,12 +11,12 @@ use backend\models\Assetsitem;
  */
 class AssetsitemSearch extends Assetsitem
 {
-    public $globalSearch;
+    public $globalSearch,$route_id;
 
     public function rules()
     {
         return [
-            [['id', 'status', 'company_id', 'branch_id', 'created_at', 'created_by', 'updated_at', 'updated_by'], 'integer'],
+            [['id', 'status', 'company_id', 'branch_id', 'created_at', 'created_by', 'updated_at', 'updated_by','route_id'], 'integer'],
             [['asset_no', 'asset_name', 'description'], 'safe'],
             [['globalSearch'],'string'],
         ];
@@ -44,6 +44,9 @@ class AssetsitemSearch extends Assetsitem
 
         // add conditions that should always apply here
 
+        $query->join('left join', 'customer_asset','assets.id = customer_asset.product_id');
+        $query->join('left join','query_customer_info','customer_asset.customer_id = query_customer_info.customer_id');
+
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
         ]);
@@ -57,20 +60,29 @@ class AssetsitemSearch extends Assetsitem
         }
 
         // grid filtering conditions
-        $query->andFilterWhere([
-            'id' => $this->id,
-            'status' => $this->status,
-            'company_id' => $this->company_id,
-            'branch_id' => $this->branch_id,
-            'created_at' => $this->created_at,
-            'created_by' => $this->created_by,
-            'updated_at' => $this->updated_at,
-            'updated_by' => $this->updated_by,
-        ]);
+//        $query->andFilterWhere([
+//            'assets.id' => $this->id,
+//            'assets.status' => $this->status,
+//            'assets.company_id' => $this->company_id,
+//            'assets.branch_id' => $this->branch_id,
+//            'assets.created_at' => $this->created_at,
+//            'assets.created_by' => $this->created_by,
+//            'assets.updated_at' => $this->updated_at,
+//            'assets.updated_by' => $this->updated_by,
+//        ]);
 
-        $query->orFilterWhere(['like', 'asset_no', $this->globalSearch])
-            ->orFilterWhere(['like', 'asset_name', $this->globalSearch])
-            ->orFilterWhere(['like', 'description', $this->globalSearch]);
+        if($this->route_id !=null){
+            $query->andFilterWhere(['query_customer_info.rt_id' => $this->route_id]);
+        }
+
+        if($this->globalSearch !=null || $this->globalSearch != ''){
+            $query->orFilterWhere(['like', 'asset_no', $this->globalSearch])
+                ->orFilterWhere(['like', 'asset_name', $this->globalSearch])
+              //  ->orFilterWhere(['like', 'query_customer_info.route_code', $this->globalSearch])
+                ->orFilterWhere(['like', 'description', $this->globalSearch]);
+        }
+
+
 
         return $dataProvider;
     }

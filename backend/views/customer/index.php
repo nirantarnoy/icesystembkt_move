@@ -65,6 +65,18 @@ $this->params['breadcrumbs'][] = $this->title;
             'sort_name',
             'name',
             'description',
+                    [
+                'attribute' => 'active_date',
+                'value' => function ($data) {
+                    if(date('Y',strtotime($data->active_date)) == 1970){
+                        return '';
+                    }else{
+                        return date('d-m-Y', strtotime($data->active_date));
+                    }
+
+                }
+            ],
+
             [
                 'attribute' => 'customer_group_id',
                 'value' => function ($data) {

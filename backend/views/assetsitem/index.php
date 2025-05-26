@@ -23,7 +23,7 @@ $this->params['breadcrumbs'][] = $this->title;
             </p>
         </div>
         <div class="col-lg-2" style="text-align: right">
-            <form id="form-perpage" class="form-inline" action="<?= Url::to(['cartype/index'], true) ?>"
+            <form id="form-perpage" class="form-inline" action="<?= Url::to(['assetsitem/index'], true) ?>"
                   method="post">
                 <div class="form-group">
                     <label>แสดง </label>
@@ -37,7 +37,7 @@ $this->params['breadcrumbs'][] = $this->title;
             </form>
         </div>
     </div>
-    <?php echo $this->render('_search', ['model' => $searchModel, 'viewstatus' => $viewstatus]); ?>
+    <?php echo $this->render('_search', ['model' => $searchModel, 'viewstatus' => $viewstatus,'viewstatus2' => $viewstatus2]); ?>
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
@@ -82,15 +82,29 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
             [
                 'attribute' => 'customer_id',
+                'label' => 'รหัสลูกค้า',
+                'value' => function ($data) {
+                    return \backend\models\Assetsitem::findCustomerCode($data->id);
+                }
+            ],
+            [
+                'attribute' => 'customer_id',
                 'label' => 'ลูกค้า',
                 'value' => function ($data) {
-                    return \backend\models\Assetsitem::findCustomername($data->id, $data->branch_id);
+                    return \backend\models\Assetsitem::findCustomername($data->id);
+                }
+            ],
+            [
+                'attribute' => 'customer_id',
+                'label' => 'ลำดับการส่ง',
+                'value' => function ($data) {
+                    return \backend\models\Assetsitem::findCustomerRouteNum($data->id);
                 }
             ],
             [
                 'label' => 'สายส่ง',
                 'value' => function ($data) {
-                    $customer_id = \backend\models\Assetsitem::findCustomerid($data->id , $data->branch_id);
+                    $customer_id = \backend\models\Assetsitem::findCustomerid($data->id);
                     return \backend\models\Customer::findRoute($customer_id);
                 }
             ],
@@ -160,7 +174,8 @@ $this->params['breadcrumbs'][] = $this->title;
     <button class="btn btn-info">import asset customer</button>
 </form>
 
-<form action="<?= Url::to(['assetsitem/importsummarypricegroup']) ?>" method="post" enctype="multipart/form-data">
-    <input type="file" name="file_price_group">
-    <button class="btn btn-info">import summary price group</button>
+<br/>
+<form action="<?= Url::to(['assetsitem/import-asset-updateprice']) ?>" method="post" enctype="multipart/form-data">
+    <input type="file" name="file_asset_update">
+    <button class="btn btn-info">import update rent price</button>
 </form>

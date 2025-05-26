@@ -622,6 +622,11 @@ class JournalissueController extends Controller
             if ($has_order_stock == 0) {
                 $check_route_type = \backend\models\Deliveryroute::find()->where(['id' => $route_id])->one();
                 $model_update_issue_status = \common\models\JournalIssue::find()->where(['id' => $issue_id])->one();
+                if($model_update_issue_status == null){ // not have journal issue no
+                  return ['status' => $status, 'data' => $data];
+                }else if($model_update_issue_status->status == 2){ // journal already approved
+                  return ['status' => $status, 'data' => $data];
+                }
                 $model_issue_line = \backend\models\Journalissueline::find()->where(['issue_id' => $issue_id])->all();
                 foreach ($model_issue_line as $val2) {
                     if ($val2->qty <= 0 || $val2->qty == null) continue;

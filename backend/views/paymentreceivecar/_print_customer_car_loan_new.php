@@ -40,6 +40,10 @@ $mpdf->AddPageByArray([
     'margin-bottom' => 1,
 ]);
 
+$is_admin = \backend\models\User::checkIsAdmin(\Yii::$app->user->id);
+
+include \Yii::getAlias("@backend/helpers/ChangeAdminDate2.php");
+
 $model_customer_loan = null;
 if ($is_start_find == 1) {
     if ($find_customer_id != null) {
@@ -534,7 +538,7 @@ function getOrder($route_id, $customer_id, $t_date, $company_id, $branch_id, $is
               WHERE  t2.order_date <=" . "'" . date('Y-m-d H:i:s', strtotime($t_date)) . "'" . "
               AND t2.route_id =" . $route_id . "              
               AND t2.payment_method_id = 2
-              AND t2.payment_status = 0;
+              AND t2.payment_status = 0
               AND t2.company_id=" . $company_id . " AND t2.branch_id=" . $branch_id;
 
             if ($customer_id != null || $customer_id != '') {
@@ -567,6 +571,7 @@ function getOrder($route_id, $customer_id, $t_date, $company_id, $branch_id, $is
              AND t2.payment_method_id = 2
              AND t1.line_total > 0
              AND t2.payment_status = 0
+             AND t1.status in(1,100)
              AND t2.company_id=" . $company_id . " AND t2.branch_id=" . $branch_id;
 
 

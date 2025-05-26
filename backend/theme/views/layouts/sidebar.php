@@ -547,6 +547,22 @@
                                 </a>
                             </li>
                         <?php endif;?>
+                        <?php if (\Yii::$app->user->can('pos/printsummarycarnky')): ?>
+                            <li class="nav-item">
+                                <a href="index.php?r=pos/printsummarycarnky" class="nav-link pos">
+                                    <i class="far fa-circlez nav-icon"></i>
+                                    <p>แยกสินค้าสายส่ง</p>
+                                </a>
+                            </li>
+                        <?php endif; ?>
+                        <?php if (\Yii::$app->user->can('pos/printsummaryposnky')): ?>
+                            <li class="nav-item">
+                                <a href="index.php?r=pos/printsummaryposnky" class="nav-link pos">
+                                    <i class="far fa-circlez nav-icon"></i>
+                                    <p>แยกสินค้าหน้าบ้าน</p>
+                                </a>
+                            </li>
+                        <?php endif; ?>
                     </ul>
                 </li>
                 <li class="nav-item has-treeview has-sub">
@@ -861,6 +877,22 @@
                                 <a href="index.php?r=salereportdistributor/index" class="nav-link salereportdistributor">
                                     <i class="far fa-circlez nav-icon"></i>
                                     <p>รายงานสรุปขายยี่ปั๊วะ</p>
+                                </a>
+                            </li>
+                        <?php endif;?>
+                        <?php if (\Yii::$app->user->can('saleqtysumbyprice/index')): ?>
+                            <li class="nav-item">
+                                <a href="index.php?r=saleqtysumbyprice/index2" class="nav-link saleqtysumbyprice">
+                                    <i class="far fa-circlez nav-icon"></i>
+                                    <p>แคทหน้าบ้าน</p>
+                                </a>
+                            </li>
+                        <?php endif;?>
+                        <?php if (\Yii::$app->user->can('saleqtysumbyprice/index2')): ?>
+                            <li class="nav-item">
+                                <a href="index.php?r=saleqtysumbyprice/index2" class="nav-link saleqtysumbyprice">
+                                    <i class="far fa-circlez nav-icon"></i>
+                                    <p>แคทขายรถ</p>
                                 </a>
                             </li>
                         <?php endif;?>
